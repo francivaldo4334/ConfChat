@@ -1,6 +1,5 @@
 package br.com.confchat.api.utils;
 
-import java.nio.charset.Charset;
 import java.util.Random;
 
 public class CodeGenerete {

@@ -5,22 +5,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.confchat.api.models.AuthorizeRequest;
 import br.com.confchat.api.models.User;
 import br.com.confchat.api.viewmodels.LogInVM;
 import br.com.confchat.api.viewmodels.LogUpVM;
+import br.com.confchat.api.viewmodels.NewPasswordVM;
 import br.com.confchat.api.viewmodels.TokenVM;
+import br.com.confchat.api.repositorys.RecoverPasswordRepository;
 import br.com.confchat.api.repositorys.UserRepository;
 import br.com.confchat.api.utils.CodeGenerete;
+import br.com.confchat.api.utils.EmailHelper;
 import br.com.confchat.api.utils.JwtUtils;
 import br.com.confchat.api.utils.RegexStrings;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.sql.Date;
 import java.util.Optional;
 
 @RestController
@@ -30,6 +36,8 @@ import java.util.Optional;
 public class AuthController {
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private RecoverPasswordRepository recoverPasswordRepository;
     @Autowired
     private PasswordEncoder encoder;
     @PostMapping("/register")
@@ -78,6 +86,32 @@ public class AuthController {
         response.setToken(_token);
         return ResponseEntity.ok(response);
     }
-    
-
+    @PostMapping("/request-recover-password")
+    public ResponseEntity RequestRecoverPassword(@PathVariable String email){
+        var user = userRepository.findByEmail(email);
+        if(user.isEmpty())
+            return ResponseEntity.badRequest().body("user not found.");
+        AuthorizeRequest pr = new AuthorizeRequest();
+        pr.setUserId(user.get().getId());
+        pr.setCreatedIn(new Date(System.currentTimeMillis()));
+        recoverPasswordRepository.save(pr);
+        EmailHelper.recoverPassword(email, String.valueOf(pr.getId()));
+        return ResponseEntity.ok("email sent.");
+    }
+    @RequestMapping("/recover-password")
+    public ResponseEntity RecoverPassword(@RequestBody NewPasswordVM newPasswordVM){
+        var request = recoverPasswordRepository.findById(newPasswordVM.getCode());
+        if(request.isEmpty())
+            return ResponseEntity.badRequest().body("request not found.");
+        if(new Date(System.currentTimeMillis()).getTime()>request.get().getCreatedIn().getTime()){
+            recoverPasswordRepository.delete(request.get());
+            return ResponseEntity.badRequest().body("request not found.");
+        }
+        var user = userRepository.findById(request.get().getUserId());
+        if(user.isEmpty())
+            return ResponseEntity.badRequest().body("user not found.");
+        user.get().setPassword(newPasswordVM.getNewPassword());
+        userRepository.save(user.get());
+        return ResponseEntity.ok(null);
+    }
 }

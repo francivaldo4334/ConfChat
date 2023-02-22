@@ -14,7 +14,7 @@ public class CodeGenerete {
     Random random = new Random();
 
     // specify length of random string
-    int length = 7;
+    int length = 20;
 
     for(int i = 0; i < length; i++) {
 

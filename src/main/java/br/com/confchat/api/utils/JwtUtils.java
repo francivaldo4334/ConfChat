@@ -1,6 +1,8 @@
 package br.com.confchat.api.utils;
 
 import java.sql.Date;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.auth0.jwt.JWT;
@@ -11,7 +13,8 @@ import br.com.confchat.api.models.User;
 @Component
 public class JwtUtils {
     public static final int TOKEN_EXPIRATION = 3600_000;
-    public static final String TOKEN_PASSWORD = "7083d396-aa13-4bd2-b4d6-15370c501e8b";
+    @Value("${jwt.token.password}")
+    public static String TOKEN_PASSWORD;
     public static final String ATTRIBUTE_PREFIX = "Bearer ";
     public static String generateJwt(User user){
         long now = System.currentTimeMillis();

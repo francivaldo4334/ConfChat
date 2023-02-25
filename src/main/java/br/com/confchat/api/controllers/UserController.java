@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,12 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 import br.com.confchat.api.models.ChatMessage;
+import br.com.confchat.api.models.Notice;
 import br.com.confchat.api.models.User;
 import br.com.confchat.api.repositorys.ChatMessageRepository;
 import br.com.confchat.api.repositorys.ContactRepository;
 import br.com.confchat.api.repositorys.NoticeRepository;
 import br.com.confchat.api.repositorys.UserRepository;
 import br.com.confchat.api.utils.JwtUtils;
+import br.com.confchat.api.viewmodels.NoticeVM;
 import br.com.confchat.api.viewmodels.SendMessageVM;
 import br.com.confchat.api.viewmodels.UserVM;
 
@@ -57,6 +60,18 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
          var listRespose = noticeRepository.findByUserId(Integer.parseInt(jwt.getIssuer()));
          return ResponseEntity.ok().body(listRespose);
+    }
+    @PostMapping("/notification/{code}")
+    public ResponseEntity setNotifications(@PathVariable String code,@RequestBody NoticeVM noticeVM){
+        var user = userRepository.findByCode(code);
+        if(user.isEmpty())
+            return ResponseEntity.badRequest().body("user not found.");
+        var notice = new Notice();
+        notice.setText(noticeVM.getText());
+        notice.setTitle(noticeVM.getTitle());
+        notice.setUserId(user.get().getId());
+        noticeRepository.save(notice);
+        return ResponseEntity.ok().body(notice);
     }
     @GetMapping("/contacts")
     public ResponseEntity getContacts(@RequestHeader("Authorization") String bearerToken){

@@ -79,7 +79,7 @@ public class AuthController {
     public ResponseEntity LogIn(@RequestBody LogInVM login){
         Optional<User> optUser = userRepository.findByEmail(login.getEmail());
         if(optUser.isEmpty()||!encoder.matches(login.getPassword(), optUser.get().getPassword()))
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return ResponseEntity.ok(new TokenVM());
         String _token = JwtUtils.generateJwt(optUser.get());
         TokenVM response = new TokenVM();
         response.setId(optUser.get().getId());

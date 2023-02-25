@@ -91,6 +91,6 @@ public class UserController {
         chatMessgeContact.setText(message.getText());
         chatMessge.setPerson(2);
         chatMessageRepository.save(chatMessgeContact);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.ok().body(message.getCode());
     }
 }

@@ -14,10 +14,5 @@ public interface ChatMessageRepository extends CrudRepository<ChatMessage,Intege
     Optional<ChatMessage> findById(int id);
     Collection<ChatMessage> findByUserId(int userId);
     void delete(ChatMessage notice);
-    @Query("SELECT * FROM chat_message WHERE id=:id AND contact_id=:contactId")
-    Collection<ChatMessage> findContactChat(
-        @Param("id")
-        int id,
-        @Param("contactId")
-        int contactId);
+    Collection<ChatMessage> findByIdAndContactId(int id,int contactId);
 }

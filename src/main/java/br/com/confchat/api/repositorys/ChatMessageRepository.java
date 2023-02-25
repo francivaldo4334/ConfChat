@@ -15,4 +15,5 @@ public interface ChatMessageRepository extends CrudRepository<ChatMessage,Intege
     Collection<ChatMessage> findByUserId(int userId);
     void delete(ChatMessage notice);
     Collection<ChatMessage> findByIdAndContactId(int id,int contactId);
+    Collection<ChatMessage> findByuserIdAndCode(int userId,String code);
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 import br.com.confchat.api.models.ChatMessage;
+import br.com.confchat.api.models.Contact;
 import br.com.confchat.api.models.Notice;
 import br.com.confchat.api.models.User;
 import br.com.confchat.api.repositorys.ChatMessageRepository;
@@ -81,6 +82,28 @@ public class UserController {
         var listResponse = contactRepository.findByUserId(Integer.parseInt(jwt.getIssuer()));
         return ResponseEntity.ok().body(listResponse);
     }
+    @PostMapping("/contact/{code}")
+    public ResponseEntity setContacts(@RequestHeader("Authorization") String bearerToken,@PathVariable String code){
+        var jwt = JwtUtils.verify(bearerToken);
+        if(jwt == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        var user1 = userRepository.findById(Integer.parseInt(jwt.getIssuer()));
+        if(user1.isEmpty())
+            return ResponseEntity.badRequest().body("user1 not found.");
+        var user2 = userRepository.findByCode(code);
+        if(user2.isEmpty())
+            return ResponseEntity.badRequest().body("user2 not found.");
+        var exists = contactRepository.findByIdAndCode(user1.get().getId(),code);
+        if(!exists.isEmpty())
+            return ResponseEntity.ok("Contact exists.");
+        var contact = new Contact();
+        contact.setCode(code);
+        contact.setUserId(user1.get().getId());
+        contact.setFriend(false);
+        contact.setFriendId(user2.get().getId());
+        contactRepository.save(contact);
+        return ResponseEntity.ok(contact);
+    }
     @PostMapping("/send_message")
     public ResponseEntity sendMessage(@RequestHeader("Authorization") String bearerToken,@RequestBody SendMessageVM message){
         var jwt = JwtUtils.verify(bearerToken);
@@ -97,6 +120,7 @@ public class UserController {
         chatMessge.setContactId(user2.get().getId());
         chatMessge.setVisualized(true);
         chatMessge.setText(message.getText());
+        chatMessge.setCode(user2.get().getCode());
         chatMessge.setPerson(1);
         chatMessageRepository.save(chatMessge);
         var chatMessgeContact = new ChatMessage();
@@ -104,8 +128,18 @@ public class UserController {
         chatMessgeContact.setContactId(user1.get().getId());
         chatMessgeContact.setVisualized(false);
         chatMessgeContact.setText(message.getText());
-        chatMessge.setPerson(2);
+        chatMessgeContact.setCode(user1.get().getCode());
+        chatMessgeContact.setPerson(2);
         chatMessageRepository.save(chatMessgeContact);
-        return ResponseEntity.ok().body(message.getCode());
+        return ResponseEntity.ok().body(chatMessgeContact);
+    }
+    @GetMapping("/messages/{code}")
+    public ResponseEntity getMessages(@RequestHeader("Authorization") String bearerToken,@PathVariable String code){
+        var jwt = JwtUtils.verify(bearerToken);
+        if(jwt == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        var messages = chatMessageRepository.findByuserIdAndCode(Integer.parseInt(jwt.getIssuer()),code);
+        return ResponseEntity.ok(messages);
     }
 }
+

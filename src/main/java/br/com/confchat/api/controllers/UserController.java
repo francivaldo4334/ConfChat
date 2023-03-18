@@ -1,6 +1,7 @@
 package br.com.confchat.api.controllers;
 
 
+import java.util.Collection;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import br.com.confchat.api.repositorys.ContactRepository;
 import br.com.confchat.api.repositorys.NoticeRepository;
 import br.com.confchat.api.repositorys.UserRepository;
 import br.com.confchat.api.utils.JwtUtils;
+import br.com.confchat.api.viewmodels.Informs;
 import br.com.confchat.api.viewmodels.NoticeVM;
 import br.com.confchat.api.viewmodels.SendMessageVM;
 import br.com.confchat.api.viewmodels.UserVM;
@@ -40,7 +42,7 @@ public class UserController {
     private ChatMessageRepository chatMessageRepository;
 
     @GetMapping
-    public ResponseEntity getUserInfo(@RequestHeader("Authorization") String bearerToken){
+    public ResponseEntity<UserVM> getUserInfo(@RequestHeader("Authorization") String bearerToken){
         var jwt = JwtUtils.verify(bearerToken);
         if(jwt == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -55,7 +57,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/notifications")
-    public ResponseEntity getNotifications(@RequestHeader("Authorization") String bearerToken){
+    public ResponseEntity<Collection<Notice>> getNotifications(@RequestHeader("Authorization") String bearerToken){
         var jwt = JwtUtils.verify(bearerToken);
         if(jwt == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -63,7 +65,7 @@ public class UserController {
          return ResponseEntity.ok().body(listRespose);
     }
     @PostMapping("/notification/{code}")
-    public ResponseEntity setNotifications(@PathVariable String code,@RequestBody NoticeVM noticeVM){
+    public ResponseEntity<Object> setNotifications(@PathVariable String code,@RequestBody NoticeVM noticeVM){
         var user = userRepository.findByCode(code);
         if(user.isEmpty())
             return ResponseEntity.badRequest().body("user not found.");
@@ -75,7 +77,7 @@ public class UserController {
         return ResponseEntity.ok().body(notice);
     }
     @GetMapping("/contacts")
-    public ResponseEntity getContacts(@RequestHeader("Authorization") String bearerToken){
+    public ResponseEntity<Collection<Contact>> getContacts(@RequestHeader("Authorization") String bearerToken){
         var jwt = JwtUtils.verify(bearerToken);
         if(jwt == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -83,7 +85,7 @@ public class UserController {
         return ResponseEntity.ok().body(listResponse);
     }
     @PostMapping("/contact/{code}")
-    public ResponseEntity setContacts(@RequestHeader("Authorization") String bearerToken,@PathVariable String code){
+    public ResponseEntity<Object> setContacts(@RequestHeader("Authorization") String bearerToken,@PathVariable String code){
         var jwt = JwtUtils.verify(bearerToken);
         if(jwt == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -105,7 +107,7 @@ public class UserController {
         return ResponseEntity.ok(contact);
     }
     @PostMapping("/send_message")
-    public ResponseEntity sendMessage(@RequestHeader("Authorization") String bearerToken,@RequestBody SendMessageVM message){
+    public ResponseEntity<Object> sendMessage(@RequestHeader("Authorization") String bearerToken,@RequestBody SendMessageVM message){
         var jwt = JwtUtils.verify(bearerToken);
         if(jwt == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -134,12 +136,25 @@ public class UserController {
         return ResponseEntity.ok().body(chatMessgeContact);
     }
     @GetMapping("/messages/{code}")
-    public ResponseEntity getMessages(@RequestHeader("Authorization") String bearerToken,@PathVariable String code){
+    public ResponseEntity<Collection<ChatMessage>> getMessages(@RequestHeader("Authorization") String bearerToken,@PathVariable String code){
         var jwt = JwtUtils.verify(bearerToken);
         if(jwt == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         var messages = chatMessageRepository.findByuserIdAndCode(Integer.parseInt(jwt.getIssuer()),code);
         return ResponseEntity.ok(messages);
+    }
+    @GetMapping("/informs")
+    public ResponseEntity<Informs> getMessages(@RequestHeader("Authorization") String bearerToken){
+        var jwt = JwtUtils.verify(bearerToken);
+        if(jwt == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        int userId = Integer.parseInt(jwt.getIssuer());
+        var notices = noticeRepository.findByUserIdAndAtivo(userId, true);
+        var chats = chatMessageRepository.findByUserIdAndVisualized(userId,false);
+        var informs = new Informs();
+        informs.setChats(chats);
+        informs.setNotices(notices);
+        return ResponseEntity.ok(informs);
     }
 }
 

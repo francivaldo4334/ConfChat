@@ -29,7 +29,7 @@ public class JwtUtils {
     public static DecodedJWT verify(String authorizer){
         try{
             String token = authorizer.replace(ATTRIBUTE_PREFIX, "");
-            var verify = JWT.require(Algorithm.HMAC512(JwtUtils.TOKEN_PASSWORD)).build().verify(token);
+            var verify = JWT.require(Algorithm.HMAC512(TOKEN_PASSWORD)).build().verify(token);
             var dateNow = new Date(System.currentTimeMillis());
             var dateExpiresAt = verify.getExpiresAt().getTime();
             if(dateNow.getTime() > dateExpiresAt)

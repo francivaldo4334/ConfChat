@@ -24,6 +24,7 @@ import br.com.confchat.api.utils.CodeGenerete;
 import br.com.confchat.api.utils.EmailHelper;
 import br.com.confchat.api.utils.JwtUtils;
 import br.com.confchat.api.utils.RegexStrings;
+import br.com.confchat.api.utils.ValidHelper;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,41 +43,35 @@ public class AuthController {
     @Autowired
     private PasswordEncoder encoder;
     @PostMapping("/register")
-    public ResponseEntity Logup(@RequestBody LogUpVM infoLogUp){
-        User newUser = new User(
+    public ResponseEntity<String> Logup(@RequestBody LogUpVM infoLogUp){
+        User registeredUser = new User(
             infoLogUp.getName(),
             infoLogUp.getEmail(),
             infoLogUp.getPassword()
         );
-        Pattern pattern;
-        Matcher matcher;
-
-        pattern = Pattern.compile(RegexStrings.Name);
-        matcher = pattern.matcher(newUser.getName());
-        if(!matcher.matches())
+        if(!ValidHelper.isValidName(registeredUser.getName()))
             return ResponseEntity.badRequest().body("name-invalid");
 
-        pattern = Pattern.compile(RegexStrings.Email);
-        matcher = pattern.matcher(newUser.getEmail());
-        if(!matcher.matches())
+        if(!ValidHelper.isValidEmail(registeredUser.getEmail()))
             return ResponseEntity.badRequest().body("email-invalid");
         
-        Optional<User> checkEmail = userRepository.findByEmail(newUser.getEmail());
-        if(!checkEmail.isEmpty())
+        Optional<User> existingUser = userRepository.findByEmail(registeredUser.getEmail());
+        if(!existingUser.isEmpty())
             return ResponseEntity.badRequest().body("email-unavailable");
-        String code = CodeGenerete.generate();
-        while(!userRepository.findByCode(code).isEmpty()){
-            code = CodeGenerete.generate();
-        }
-        newUser.setCode(code);
-        newUser.setPassword(encoder.encode(newUser.getPassword()));
-        String response = userRepository.save(newUser).getCode();
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        String code = CodeGenerete.generate();
+        while(!userRepository.findByCode(code).isEmpty())
+            code = CodeGenerete.generate();
+
+        registeredUser.setCode(code);
+        registeredUser.setPassword(encoder.encode(registeredUser.getPassword()));
+
+        String savedUser = userRepository.save(registeredUser).getCode();
+
+        return ResponseEntity.status(HttpStatus.OK).body(savedUser);
     }
-    // @ApiOperation(value = "This method is used to get the clients.")
     @PostMapping("/login")
-    public ResponseEntity LogIn(@RequestBody LogInVM login){
+    public ResponseEntity<TokenVM> LogIn(@RequestBody LogInVM login){
         Optional<User> optUser = userRepository.findByEmail(login.getEmail());
         if(optUser.isEmpty()||!encoder.matches(login.getPassword(), optUser.get().getPassword()))
             return ResponseEntity.ok(new TokenVM());
@@ -88,7 +83,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     @PostMapping("/request-recover-password")
-    public ResponseEntity RequestRecoverPassword(@PathVariable String email){
+    public ResponseEntity<String> RequestRecoverPassword(@PathVariable String email){
         var user = userRepository.findByEmail(email);
         if(user.isEmpty())
             return ResponseEntity.badRequest().body("user not found.");
@@ -100,7 +95,7 @@ public class AuthController {
         return ResponseEntity.ok("email sent.");
     }
     @PutMapping("/recover-password")
-    public ResponseEntity RecoverPassword(@RequestBody NewPasswordVM newPasswordVM){
+    public ResponseEntity<String> RecoverPassword(@RequestBody NewPasswordVM newPasswordVM){
         var request = recoverPasswordRepository.findById(newPasswordVM.getCode());
         if(request.isEmpty())
             return ResponseEntity.badRequest().body("request not found.");

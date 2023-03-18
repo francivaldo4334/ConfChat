@@ -5,6 +5,13 @@ public class UserVM {
     private String code;
     private String permitions;
     private String email;
+    private String name;
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
     public String getPhotoUrl() {
         return photoUrl;
     }

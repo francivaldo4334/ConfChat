@@ -18,13 +18,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class JWTConfig {
-    @Autowired
-    UserRepository userRepository;
-    private final AuthenticationConfiguration configuration;
-    public JWTConfig(AuthenticationConfiguration configuration) {
-        this.configuration = configuration;
-    }
-    
     @Bean
 	public PasswordEncoder getPasswordEncoder(){
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -42,7 +35,7 @@ public class JWTConfig {
             .and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
-            .formLogin().disable()
+            .formLogin().loginPage("/api/auth/login").disable()
             .build();
     }
 }

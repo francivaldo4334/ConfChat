@@ -12,4 +12,5 @@ public interface NoticeRepository extends CrudRepository<Notice,Integer>{
     Optional<Notice> findById(int id);
     Collection<Notice> findByUserId(int userId);
     void delete(Notice notice);
+    Collection<Notice> findByUserIdAndAtivo(int userId,boolean ativo);
 }

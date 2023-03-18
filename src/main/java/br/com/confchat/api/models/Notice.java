@@ -17,6 +17,15 @@ public class Notice {
     private int userId;
     private String title;
     private String text;
+    private boolean ativo;
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
 
     public int getId() {
         return id;

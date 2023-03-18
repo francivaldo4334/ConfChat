@@ -5,7 +5,7 @@ import java.util.Random;
 public class CodeGenerete {
     public static String generate(){
         // create a string of all characters
-    String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
 
     // create random string builder
     StringBuilder sb = new StringBuilder();
@@ -14,7 +14,7 @@ public class CodeGenerete {
     Random random = new Random();
 
     // specify length of random string
-    int length = 20;
+    int length = 10;
 
     for(int i = 0; i < length; i++) {
 
